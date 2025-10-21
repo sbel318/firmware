@@ -134,6 +134,10 @@ extern void drawCommonHeader(OLEDDisplay *display, int16_t x, int16_t y, const c
 #include "Sensor/TSL2561Sensor.h"
 #endif
 
+#if __has_include(<MS5803.h>)
+#include "Sensor/MS5803Sensor.h"
+#endif
+
 #define FAILED_STATE_SENSOR_READ_MULTIPLIER 10
 #define DISPLAY_RECEIVEID_MEASUREMENTS_ON_SCREEN true
 
@@ -215,6 +219,10 @@ void EnvironmentTelemetryModule::i2cScanFinished(ScanI2C *i2cScanner)
 #endif
 #if __has_include(<Adafruit_BMP280.h>)
     addSensor<BMP280Sensor>(i2cScanner, ScanI2C::DeviceType::BMP_280);
+#endif
+#if __has_include(<MS5803.h>)
+    // Custom MS5803 depth sensor (uses EnvironmentMetrics.distance as depth meters)
+    addSensor<MS5803Sensor>(i2cScanner, ScanI2C::DeviceType::NONE);
 #endif
 #if __has_include(<Adafruit_DPS310.h>)
     addSensor<DPS310Sensor>(i2cScanner, ScanI2C::DeviceType::DPS310);
