@@ -4,7 +4,15 @@
 
 #include "../mesh/generated/meshtastic/telemetry.pb.h"
 #include "TelemetrySensor.h"
+
+// Prefer a generic MS5803.h if available; otherwise support SparkFun library
+#if __has_include(<MS5803.h>)
 #include <MS5803.h>
+#define USE_MS5803_GENERIC 1
+#elif __has_include(<SparkFun_MS5803_14BA.h>)
+#include <SparkFun_MS5803_14BA.h>
+#define USE_MS5803_SPARKFUN 1
+#endif
 
 // MS5803 submersible absolute pressure sensor
 // Reports depth via EnvironmentMetrics.distance (meters).
@@ -14,7 +22,12 @@
 class MS5803Sensor : public TelemetrySensor
 {
   private:
-    MS5803 ms5803; // defaults to MS5803_02BA; change ctor if needed
+    // Backing driver instance depending on available library
+#if defined(USE_MS5803_GENERIC)
+    MS5803 ms5803;
+#elif defined(USE_MS5803_SPARKFUN)
+    MS5803 ms5803; // SparkFun class is also named MS5803
+#endif
     bool initialized = false;
 
     // Baseline atmospheric pressure in mbar (hPa). Set via config; default 1013.25.

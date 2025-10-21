@@ -18,18 +18,14 @@ bool MS5803Sensor::initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev)
     LOG_INFO("Init sensor: %s", sensorName);
 
 #if WIRE_INTERFACES_COUNT > 1
-    if (dev && dev->address.port == ScanI2C::I2CPort::WIRE1) {
-        Wire1.begin();
-        ms5803.setI2C(&Wire1);
-    } else {
-        Wire.begin();
-        ms5803.setI2C(&Wire);
-    }
+    TwoWire *bus = (dev && dev->address.port == ScanI2C::I2CPort::WIRE1) ? &Wire1 : &Wire;
 #else
-    Wire.begin();
-    ms5803.setI2C(&Wire);
+    TwoWire *bus = &Wire;
 #endif
+    bus->begin();
 
+#if defined(USE_MS5803_GENERIC)
+    ms5803.setI2C(bus);
     if (!ms5803.reset()) {
         LOG_ERROR("MS5803 reset failed");
         return false;
@@ -38,6 +34,16 @@ bool MS5803Sensor::initDevice(TwoWire *bus, ScanI2C::FoundDevice *dev)
         LOG_ERROR("MS5803 begin failed");
         return false;
     }
+#elif defined(USE_MS5803_SPARKFUN)
+    // SparkFun variant: begin requires model; use 02BA default
+    if (!ms5803.begin(bus, MS5803_02BA)) {
+        LOG_ERROR("MS5803 (SparkFun) begin failed");
+        return false;
+    }
+#else
+    LOG_ERROR("No MS5803 library available");
+    return false;
+#endif
     initialized = true;
     initI2CSensor();
     return true;
